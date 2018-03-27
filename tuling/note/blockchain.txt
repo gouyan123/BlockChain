@@ -1,0 +1,240 @@
+项目要做什么：
+①区块链网络（央行）给A10个比特币；②A收到后查询是否有这10个比特币；③A给B转账10个比特币；④B查看A给它转账的记录；
+A监听8081端口，B监听8082端口；
+A节点，B节点都要有自己的钱包；
+央行给节点的钱包发比特币就是挖矿；
+例如：A挖矿，央行给A的钱包货币，然后A跟B交易，A给B的钱包货币；
+
+接口含义：
+http://localhost:8081/chain  查看区块链；
+http://localhost:8081/wallet/create  A节点创建钱包，并返回钱包地址；
+http://localhost:8081/wallet/get  获取当前节点的钱包；
+http://localhost:8081/mine  挖矿成功，区块链网络(央行)给一笔钱，给到挖矿人的钱包地址；
+http://localhost:8081/wallet/balance/get?address=钱包地址,  查A节点钱包余额；
+
+
+http://localhost:8082/wallet/create  B节点创建钱包，并返回钱包地址；
+http://localhost:8081/wallet/balance/get?address=钱包地址,  查B节点钱包余额；
+
+http://localhost:8081/transactions/new  A节点给B节点转账10个比特币，转账后，A节点比特币变为0，但B节点
+比特币还是0，没有变为10，是因为B节点的区块还没生成，还没保存到区块链里面，还没通过验证，A要去挖矿
+http://localhost:8081/mine  A节点挖矿，生成新区块，B钱包余额变为10；A钱包余额也为10；
+
+区块链与支付宝对比：
+区块链中任意两个节点之间都可以直接通信，不需要第三方；支付宝中任意两个节点都需要第三方才能间接通信；
+
+比特币钱包下载安装与使用：
+下载链接：https://bitcoin.org/zh_CN/download
+使用说明：自己相当于一个新的区块，要同步其他所有区块的信息，即同步所有交易记录，每个区块都是一个交易记录；
+关闭掉网络同步：右下角关闭掉网络同步，否则太大，将近200G；
+发送：输入对方钱包地址，发送金额即可；A钱包金额减少，但是B钱包金额相应不会增加，需要挖矿去改写B的钱包；
+挖矿：官方比特币钱包没有挖矿功能，需要下载相应软件；
+挖矿是生成一个新的区块的过程，每个区块都是一页账本，记载交易记录；
+----------------------------区块链整体结构设计和实现--------------------------------------
+**************************************************************************************************
+绝对重要：每个用户本地都有一条区块链，挖矿成功后，将新区块广播到网络中，其他用户也加人到自己本地区块链中；
+**************************************************************************************************
+真正的服务器在哪里？ 不存在中心化服务器，每个用户节点本地都有一条区块链，分布在全世界各地；
+
+挖矿是生成一个新的区块的过程，每个区块都是一页账本，记载交易记录；
+
+区块 = 区块头 + 区块体；
+区块头 = hash值（唯一标识区块） + 索引 + 时间戳 + preHash值（前一个区块hash值）
+区块体 = 此区块所有交易记录；
+
+1、创建 com.blockchain.model.Block 区块类
+public class Block {
+	/*区块索引号*/
+	private int index;
+	/*当前区块的hash值,区块唯一标识*/
+	private String hash;
+	/*生成区块的时间戳*/
+	private long timestamp;
+	/*当前区块的交易集合*/
+	private List<Transaction> transactions;
+	/*前一个区块的hash值，通过加密以后的 hash值 计算出加密以前的 值*/
+	private int nonce;
+	/*前一个区块的hash值*/
+	private String previousHash;
+	/*setter(),getter()省略*/
+}
+2、测试包中创建 com.blockchain.block.testBlockMine.java 类，创建区块链
+@Test
+public void testBlockMine() throws Exception {
+    /*创建区块链*/
+    List<Block> blockchain = new ArrayList<Block>();
+    /*创建创世区块，其结构是定死的，参数随便写，用不到*/
+    Block firstBlock = new Block(1,System.currentTimeMillis(),new ArrayList<Transaction>(),1,"1","1");
+    /*创世区块加人区块链中*/
+    blockchain.add(firstBlock);
+    /*打印区块链*/
+    System.out.println(JSON.toJSONString(blockchain,true));
+    /*接下来生成新的区块，即挖矿，把当前区块链中所有交易记录都记录到新的区块中来*/
+}
+3、挖矿：testBlockMine类里面定义 testBlockMine()方法
+@Test
+public void testBlockMine() throws Exception {
+    /*创建区块链*/
+    List<Block> blockchain = new ArrayList<Block>();
+    /*创建创世区块，其结构是定死的，参数随便写，用不到*/
+    Block firstBlock = new Block(1,System.currentTimeMillis(),new ArrayList<Transaction>(),1,"1","1");
+    /*创世区块加人区块链中*/
+    blockchain.add(firstBlock);
+    /*打印区块链*/
+    System.out.println(JSON.toJSONString(blockchain,true));
+    /*接下来生成新的区块，即挖矿，把当前区块链中所有交易记录都记录到新的区块中来*/
+
+    /*准备挖矿，挖矿之前，系统中已经有交易了，需要交易的集合，存储交易*/
+    List<Transaction> transactions = new ArrayList<Transaction>();
+    /*此时还没有 P2P 交易，创建假的交易，模拟网络中产生 3 笔交易，存到交易集合中*/
+    Transaction t1 = new Transaction();
+    Transaction t2 = new Transaction();
+    Transaction t3 = new Transaction();
+    /*将交易添加到要打包的交易集合 transactions 中*/
+    transactions.add(t1);
+    transactions.add(t2);
+    transactions.add(t3);
+    /*要开始挖矿，①要创建系统奖励交易*/
+    Transaction sysTx = new Transaction();
+    transactions.add(sysTx);
+    /*②获取当前区块链里最后一个区块链*/
+    Block lastBlock = blockchain.get(blockchain.size() - 1);
+    /*③计算新区块 hash 值，hash = SHA256(最后一个区块的hash值 + 系统中所有交易记录信息 + 随机数)*/
+    int nonce = 1;/*定义随机数，随机数的值任意定，这里定为1*/
+    /*新区块 hash 值必须以 0或00或000或000...开头，否则，将随机数 nonce加1，再计算，依次循环，直到hash
+    前面的0位数满足要求，才表示获取到合理hash*/
+    long start = System.currentTimeMillis();
+    System.out.println("start at " + new Date(start));
+    while (true){
+        String hash = CryptoUtil.SHA256(lastBlock.getHash() + JSON.toJSONString(transactions) + nonce);
+        /*④校验hash值是否有效*/
+        if (hash.startsWith("0000")){
+            /*⑤hash验证通过则创建新的区块，并打包系统所有交易信息，并将区块加人区块链*/
+            Block newBlock = new Block(lastBlock.getIndex() + 1,System.currentTimeMillis(),transactions,1,lastBlock.getHash(),hash);
+            /*新区块添加到区块链*/
+            blockchain.add(newBlock);
+            System.out.println("hash值正确：计算次数 nonce = " + nonce +  " + hash = "+ hash);
+            break;/*中断循环*/
+        }
+        System.out.println("错误的 hash = " + hash);
+        nonce += 1;
+    }
+    long end = System.currentTimeMillis();
+    System.out.println("end at " + new Date(end));
+    System.out.println("how long : " + (end - start));
+}
+---------------------------密码学----------------------------------
+src/test/java包中：
+定义 com.blockchain.security.RSACoderTest.java 类，进行非对称加密，签名加密测试
+RSACoderTest类中定义 testEncrypt() 方法，测试非对称加密：
+@Test
+public void testEncrypt() throws Exception {
+
+}
+RSACoderTest类中定义 @Before setUp() 方法，在@Test 方法运行前运行，生成公钥私钥对：
+@Before
+public void setUp() throws Exception {
+    Map<String, Object> keyMap = RSACoder.initKey();
+    publicKey = RSACoder.getPublicKey(keyMap);
+    privateKey = RSACoder.getPrivateKey(keyMap);
+    System.err.println("公钥: \n\r" + publicKey);
+    System.err.println("私钥： \n\r" + privateKey);
+}
+RSACoderTest类中定义 成员变量 publicKey privateKey，成员变量被各方法共有，都可以操作，修改；
+回到 RSACoderTest 类中 testEncrypt() 方法
+@Test
+public void testEncrypt() throws Exception {
+    System.out.println("公钥加密-私钥解密");
+    /*需要加密内容*/
+    String inputStr = "abc";
+    /*加密内容字符串转换为字节数组*/
+    byte[] data = inputStr.getBytes();
+    /*通过公钥，对内容进行加密，得到密文*/
+    byte[] encodedRSACoder = RSACoder.encryptByPublicKey(data,this.publicKey);
+    System.out.println("发送方加密后密文 = " + new String(encodedRSACoder));
+    byte[] decodedRSACoder = RSACoder.decryptByPrivateKey(encodedRSACoder,this.privateKey);
+    System.out.println("解密方解密后内容 = " + new String(decodedRSACoder));
+}
+RSACoderTest类中定义 testSign() 方法，测试 签名加密：
+@Test
+public void testSign() throws Exception {
+    System.out.println("发送方生成公钥私钥对：公钥给别人，私钥给自己；发送方加密，接收方解密；");
+    /*签名内容*/
+    String inputStr = "sign";
+    byte[] data = inputStr.getBytes();
+    /*发送方用私钥对签名进行加密*/
+    String sign = RSACoder.sign(data,this.privateKey);
+    System.out.println(JSON.toJSONString(sign,true));
+    /*接收方用接收方方公钥验证签名*/
+    boolean status = RSACoder.verify(data,this.publicKey,sign);
+    System.out.println(JSON.toJSONString(status,true));
+}
+-------------------------------比特币的设计与实现▪比特币交易UTXO-----------------------------------
+1、交易需要钱包地址，讲交易前，先讲讲钱包，自己设计钱包模型的话，怎么设计？ 用户名 + 密码 + 金额 + 地址
+非对称加密的公钥（给所有别人）相当于用户名，私钥（给自己）相当于密码；
+创建 com.blockchain.model.Wallet.java 钱包类
+public class Wallet {
+}
+Wallet类里面定义 公钥 publicKey，私钥 privateKey 成员变量
+private String publicKey;    //要在网络中广播出去，让其他节点知道，但是这个字符串太长了，需要转化成地址
+private String privateKey;
+Wallet类里面定义 getAddress() 方法，钱包公钥转化为地址，再返回，怎么转：对公钥求hash，再求MD5；
+public String getAddress() {
+    String publicKeyHash = hashPubKey(publicKey);
+    return CryptoUtil.MD5(publicKeyHash);
+}
+Wallet类里面定义 generateWallet() 方法，生成钱包
+public static Wallet generateWallet() {
+    Map<String, Object> initKey;
+    try {
+        // 本地生成公私钥对
+        initKey = RSACoder.initKey();
+        String publicKey = RSACoder.getPublicKey(initKey);
+        String privateKey = RSACoder.getPrivateKey(initKey);
+        return new Wallet(publicKey, privateKey);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return null;
+}
+test包：com.blockchain.block.BlockServiceTest.java类中定义方法 testWallet() 测试钱包
+@Test
+public void testWallet(){
+    Wallet wallet = Wallet.generateWallet();
+    System.out.println(JSON.toJSONString(wallet,true));
+}
+
+定义 com.blockchain.model.Transaction.java 交易类
+public class Transaction {
+}
+Transaction类中定义成员变量如下：
+private String id;  /*交易唯一标识*/
+private TransactionInput txIn;  /*交易输入 输入会引用前一笔交易的输出*/
+private TransactionOutput txOut;    /*交易输出*/
+测试包中 com.blockchain.block.BlockServiceTest.java 类中定义交易对象：
+/*交易就是钱包地址之间相互转账*/
+/*首先生成 发起方和接收方 的钱包*/
+/*创建交易发起方钱包*/
+Wallet walletSender = Wallet.generateWallet();
+/*创建交易接收方钱包*/
+Wallet walletReciptent = Wallet.generateWallet();
+/*创建交易发起方                              前一次交易tx2的id 金额 签名          发送方的公钥地址*/
+TransactionInput txIn = new TransactionInput(tx2.getId(),10,null,walletSender.getPublicKey());
+/*创建交易接收方                                  金额     接收方钱包的公钥地址*/
+TransactionOutput txOut = new TransactionOutput(10,walletReciptent.getHashPubKey());
+/*创建交易tx3                     交易唯一编号       输入 输出*/
+Transaction tx3 = new Transaction(CryptoUtil.UUID(),txIn,txOut);
+/*指定tx2之前已经被打包进区块，也就是被记录进账本了*/
+tx3.sign(walletSender.getPrivateKey(),tx2);
+/*将交易tx3加人自己本地交易池中后，广播通知其他用户，可以挖矿了*/
+transactions.add(tx3);
+
+？？？签名：第4课 00:54:38 有详细讲解，但没有理解；
+main包：com.blockchain.block.BlockService.java 类中，真实情况下创建交易方法 createTransaction()
+？？？ 01:03:10 交易图不理解
+main包：com.blockchain.block.BlockService.java 类中，查询钱包余额方法 getWalletBalance(String address)
+main包：com.blockchain.block.BlockService.java 类中，挖矿方法 mine()，它又调用 方法验证交易是否有效方法
+verifyAllTransactions(blockTxs);它里面又调用 verifyTransaction(tx) 方法
+---------------------------多节点交互--------------------------------------
+
+

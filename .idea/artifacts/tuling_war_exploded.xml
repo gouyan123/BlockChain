@@ -1,0 +1,27 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" name="tuling:war exploded">
+    <output-path>$PROJECT_DIR$/tuling/target/tuling</output-path>
+    <root id="root">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="tuling" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="Maven: org.java-websocket:Java-WebSocket:1.3.4" />
+          <element id="library" level="project" name="Maven: com.alibaba:fastjson:1.2.7" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-server:9.0.0.v20130308" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty.orbit:javax.servlet:3.0.0.v201112011016" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-http:9.0.0.v20130308" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-util:9.0.0.v20130308" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-io:9.0.0.v20130308" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-servlet:9.0.0.v20130308" />
+          <element id="library" level="project" name="Maven: org.eclipse.jetty:jetty-security:9.0.0.v20130308" />
+        </element>
+      </element>
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/tuling/target/tuling/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="javaee-facet-resources" facet="tuling/web/Web" />
+    </root>
+  </artifact>
+</component>
