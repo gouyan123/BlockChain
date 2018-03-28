@@ -99,7 +99,7 @@ public void testBlockMine() throws Exception {
     transactions.add(sysTx);
     /*②获取当前区块链里最后一个区块链*/
     Block lastBlock = blockchain.get(blockchain.size() - 1);
-    /*③计算新区块 hash 值，hash = SHA256(最后一个区块的hash值 + 系统中所有交易记录信息 + 随机数)*/
+    /*③计算新区块 hash 值，hash = SHA256(最后一个区块的hash值 + 系统中新的交易记录信息 + 随机数)*/
     int nonce = 1;/*定义随机数，随机数的值任意定，这里定为1*/
     /*新区块 hash 值必须以 0或00或000或000...开头，否则，将随机数 nonce加1，再计算，依次循环，直到hash
     前面的0位数满足要求，才表示获取到合理hash*/
@@ -235,6 +235,16 @@ main包：com.blockchain.block.BlockService.java 类中，真实情况下创建�
 main包：com.blockchain.block.BlockService.java 类中，查询钱包余额方法 getWalletBalance(String address)
 main包：com.blockchain.block.BlockService.java 类中，挖矿方法 mine()，它又调用 方法验证交易是否有效方法
 verifyAllTransactions(blockTxs);它里面又调用 verifyTransaction(tx) 方法
----------------------------多节点交互--------------------------------------
+---------------------------Postman简单使用--------------------------------------
+发送Get请求 添加参数：直接点击params按钮，出现 key value框，直接输入即可；
+发送Post请求 添加参数：选择 body 选择 raw ，然后输入json对象 {x:y,a:b,...}即可传递java对象；
+保存请求到集合中：Send 按钮后面 Save 按钮保存链接，Request Name处可以修改链接名称，右下角还可以创建链接
+所在集合；
 
+区块链单节点操作：
+1、创建创世块（数据自己随便定），并加入区块链，接口链接：
+2、创建钱包（钱包地址），目的，该用户挖矿成功，即成功创建新的区块，系统奖励该用户比特币，系统奖励比特币
+存到该钱包地址上，接口链接：http://localhost:8080/wallet/create
+3、挖矿（针对自己钱包地址），用户先用计算机计算出满足条件（前n位都是"0"）的 hash，然后将 新的区块加人区块
+链，再广播通知其他用户，接口链接：http://localhost:8080/mine
 
