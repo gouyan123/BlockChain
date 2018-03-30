@@ -6,9 +6,6 @@ import com.blockchain.p2p.P2PService;
 
 /**
  * 区块链节点启动入口
- * 
- * @author aaron
- *
  */
 public class Main {
 	public static void main(String[] args) {

@@ -15,9 +15,6 @@ import com.blockchain.model.Wallet;
 
 /**
  * p2p公用服务类
- * 
- * @author aaron
- *
  */
 public class P2PService {
 	private List<WebSocket> sockets;
